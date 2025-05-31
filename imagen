@@ -1,0 +1,134 @@
+from zipfile import ZipFile
+from pathlib import Path
+
+# Crear un archivo index.html con el contenido del sitio generado
+html_content = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelPets: Mil Mascotas por un Hogar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(20, 20px);
+      grid-template-rows: repeat(20, 20px);
+      gap: 1px;
+      margin: 20px auto;
+      width: max-content;
+    }
+    .pixel {
+      width: 20px;
+      height: 20px;
+      background-color: #e0e0e0;
+      border: 1px solid #ccc;
+      font-size: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    form {
+      margin-top: 30px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1em;
+    }
+    #ranking {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐾 PixelPets: Mil Mascotas por un Hogar</h1>
+  <p>Tu mascota deja huella en mi casa. ¡Construí conmigo, píxel a píxel!</p>
+
+  <div id="grid"></div>
+
+  <form id="petForm">
+    <input type="text" id="petName" placeholder="Nombre de tu mascota" required />
+    <input type="number" id="pixels" placeholder="Cantidad de píxeles" required min="1" max="400" />
+    <button type="submit">Agregar mascota</button>
+  </form>
+
+  <div id="ranking">
+    <h3>🏆 Ranking de donantes</h3>
+    <ol id="rankingList"></ol>
+  </div>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const form = document.getElementById("petForm");
+    const rankingList = document.getElementById("rankingList");
+
+    let donations = {};
+
+    // Crear una cuadrícula de 20x20 para demo (400 píxeles)
+    const pixels = [];
+    for (let i = 0; i < 400; i++) {
+      const div = document.createElement("div");
+      div.className = "pixel";
+      div.dataset.index = i;
+      grid.appendChild(div);
+      pixels.push(div);
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("petName").value.trim();
+      const amount = parseInt(document.getElementById("pixels").value);
+
+      if (!name || isNaN(amount)) return;
+
+      const available = pixels.filter(p => !p.textContent);
+      if (amount > available.length) {
+        alert("No hay suficientes píxeles disponibles.");
+        return;
+      }
+
+      for (let i = 0; i < amount; i++) {
+        available[i].textContent = name[0].toUpperCase();
+        available[i].style.backgroundColor = "#90ee90";
+      }
+
+      donations[name] = (donations[name] || 0) + amount;
+
+      updateRanking();
+      form.reset();
+    });
+
+    function updateRanking() {
+      const sorted = Object.entries(donations).sort((a, b) => b[1] - a[1]);
+      rankingList.innerHTML = "";
+      sorted.forEach(([name, amount]) => {
+        const li = document.createElement("li");
+        li.textContent = `${name} - ${amount} píxeles`;
+        rankingList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
+"""
+
+# Crear el archivo index.html temporal
+index_path = Path("/mnt/data/index.html")
+index_path.write_text(html_content, encoding="utf-8")
+
+# Crear el archivo ZIP
+zip_path = Path("/mnt/data/pixelpets_netlify.zip")
+with ZipFile(zip_path, "w") as zipf:
+    zipf.write(index_path, arcname="index.html")
+
+zip_path.name  # Nombre del archivo zip generado
